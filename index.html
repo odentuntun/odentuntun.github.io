@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>総合計算機（タイマー付き）</title>
+    <style>
+        /* 基本スタイル */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; 
+            background-color: #f4f7f6;
+            color: #333;
+            /* スマホの縦並びレイアウト */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px; 
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 90%; 
+            max-width: 450px; 
+        }
+
+        h1, h3 {
+            font-size: 1.5em;
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid;
+        }
+        
+        h1 { border-color: #007bff; color: #007bff; }
+        h3 { border-color: #5cb85c; color: #5cb85c; } 
+
+        /* ============== カウントダウンタイマーのスタイル (シンプル版) ============== */
+        #countdownContainer {
+            background-color: #34495e; 
+            padding: 10px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 450px;
+            
+            /* 2x2グリッドレイアウト */
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+        }
+        
+        .timer-box {
+            background-color: #2c3e50; 
+            color: white;
+            padding: 8px 3px; 
+            border-radius: 5px;
+            text-align: center;
+            /* Flexで上下中央揃え */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .timer-label {
+            font-size: 0.75em; 
+            font-weight: bold;
+            display: block;
+            margin-bottom: 1px; 
+            color: #ecf0f1;
+            line-height: 1.2;
+        }
+
+        .timer-time {
+            font-size: 1.3em; 
+            font-weight: 900;
+            color: #f1c40f; 
+            display: block;
+            line-height: 1.2;
+        }
+
+        /* ============== 計算機共通スタイル (既存) ============== */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        input[type="number"], select {
+            width: calc(100% - 10px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+            text-align: right;
+            min-height: 40px; 
+            appearance: none; 
+            -webkit-appearance: none;
+        }
+
+        /* 非表示/削除 */
+        .button-material, .button-level {
+             display: none; 
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #e9ecef;
+            white-space: pre-wrap;
+            font-size: 0.95em;
+        }
+
+        .warning {
+            color: #dc3545;
+            font-size: 0.8em;
+            margin-top: 8px;
+        }
+
+        /* 結果エリアのマージン調整 */
+        #levelResult, #materialResult {
+            margin-top: 18px; 
+        }
+    </style>
+</head>
+<body>
+
+<div id="countdownContainer">
+    <div class="timer-box">
+        <span class="timer-label">宣戦布告 (8:00)</span>
+        <span id="timer-0" class="timer-time">--:--:--</span>
+    </div>
+    <div class="timer-box">
+        <span class="timer-label">正午ボス戦 (12:45)</span>
+        <span id="timer-1" class="timer-time">--:--:--</span>
+    </div>
+    <div class="timer-box">
+        <span class="timer-label">夕方ボス戦 (19:45)</span>
+        <span id="timer-2" class="timer-time">--:--:--</span>
+    </div>
+    <div class="timer-box">
+        <span class="timer-label">王都争奪戦 (21:30)</span>
+        <span id="timer-3" class="timer-time">--:--:--</span>
+    </div>
+</div>
+
+<div class="container">
+    <h1>レベル低下計算機(+_+)</h1>
+    <div class="input-group">
+        <label for="originalLevel">敵か自分のキャラクターレベル (LV):</label>
+        <select id="originalLevel" onchange="calculateLevel()">
+            </select>
+    </div>
+    <div class="input-group">
+        <label for="squads">部隊数 (例: 10部隊 = 50 KILL):</label>
+        <input type="number" id="squads" value="10" min="0" oninput="calculateLevel()">
+    </div>
+    <div id="levelResult" class="result">結果待ち...</div>
+</div>
+
+<div class="container">
+    <h3>潜在能力-素材節約計算機 おまけ</h3>
+        <p style="font-size: 0.85em; margin-bottom: 20px;">目標値までの必要素材数とLVアップでの節約量、65.2%以降は比例してコスパが上昇するのでお薦めされていない</p>
+
+    <div class="input-group">
+        <label for="simCurrentPotential">現在の潜在能力値 (%):</label>
+        <input type="number" id="simCurrentPotential" value="10" min="0" max="100" step="1" oninput="calculateMaterial()">
+    </div>
+    
+    <div class="input-group">
+        <label for="targetPotential">目標潜在能力値 (%):</label>
+        <select id="targetPotential" onchange="calculateMaterial()">
+            <option value="60">60.0%</option>
+            <option value="65.2" selected>65.2%</option>
+            <option value="70">70.0%</option>
+            <option value="80">80.0%</option>
+            <option value="90">90.0%</option>
+            <option value="100">100.0%</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label for="currentSimRank">現在のプレイヤーレベル:</label>
+        <select id="currentSimRank" onchange="calculateMaterial()">
+            <option value="85">～85</option>
+            <option value="114" selected>86～114</option>
+            <option value="142">115～142</option>
+            <option value="171">143～171</option>
+            <option value="199">172～199</option>
+            <option value="200">200～</option>
+        </select>
+    </div>
+
+    <div id="materialResult" class="result">結果待ち...</div>
+</div>
+
+
+<script>
+    // --- データテーブル定義 (全計算機で共有) ---
+    const POTENTIAL_TABLE = {
+        '200': [ [42.0, 0.21], [60.0, 0.18], [61.0, 0.10], [61.9, 0.09], [62.7, 0.08], [63.4, 0.07], [64.0, 0.06], [64.5, 0.05], [64.9, 0.04], [65.2, 0.03], [100.0, 0.02] ],
+        '199': [ [42.0, 0.20], [60.0, 0.17], [61.0, 0.09], [61.9, 0.08], [62.7, 0.07], [63.4, 0.06], [64.0, 0.05], [64.5, 0.04], [64.9, 0.03], [65.2, 0.02], [100.0, 0.01] ],
+        '171': [ [42.0, 0.19], [60.0, 0.16], [61.0, 0.09], [61.9, 0.08], [62.7, 0.07], [63.4, 0.06], [64.0, 0.05], [64.5, 0.04], [64.9, 0.03], [65.2, 0.02], [100.0, 0.01] ],
+        '142': [ [42.0, 0.18], [60.0, 0.15], [61.0, 0.08], [61.9, 0.07], [62.7, 0.06], [63.4, 0.06], [64.0, 0.05], [64.5, 0.04], [64.9, 0.03], [65.2, 0.02], [100.0, 0.01] ],
+        '114': [ [42.0, 0.17], [60.0, 0.15], [61.0, 0.08], [61.9, 0.07], [62.7, 0.06], [63.4, 0.05], [64.0, 0.04], [64.5, 0.03], [64.9, 0.02], [65.2, 0.02], [100.0, 0.01] ],
+        '85':  [ [42.0, 0.16], [60.0, 0.00], [61.0, 0.00], [61.9, 0.00], [62.7, 0.00], [63.4, 0.00], [64.0, 0.00], [64.5, 0.00], [64.9, 0.00], [65.2, 0.00], [100.0, 0.00] ] 
+    };
+
+    // --- 0. カウントダウンタイマーのロジック ---
+    const eventTimes = [
+        { name: "宣戦布告", time: "08:00:00" },
+        { name: "正午ボス戦", time: "12:45:00" },
+        { name: "夕方ボス戦", time: "19:45:00" },
+        { name: "王都争奪戦", time: "21:30:00" } 
+    ];
+
+    function startCountdown() {
+        const now = new Date();
+        const nowMs = now.getTime();
+
+        eventTimes.forEach((event, index) => {
+            const [hours, minutes, seconds] = event.time.split(':').map(Number);
+            
+            // 今日のイベント時刻を作成 (現在のタイムゾーンを使用)
+            let target = new Date();
+            target.setHours(hours, minutes, seconds, 0);
+
+            // すでに過ぎていたら、ターゲットを明日の同じ時刻に設定
+            if (target.getTime() < nowMs) {
+                target.setDate(target.getDate() + 1);
+            }
+
+            const distance = target.getTime() - nowMs;
+            const element = document.getElementById(`timer-${index}`);
+
+            if (distance < 0) {
+                element.textContent = "00:00:00";
+            } else {
+                const totalSeconds = Math.floor(distance / 1000);
+                const h = Math.floor(totalSeconds / 3600);
+                const m = Math.floor((totalSeconds % 3600) / 60);
+                const s = totalSeconds % 60;
+
+                const displayH = String(h).padStart(2, '0');
+                const displayM = String(m).padStart(2, '0');
+                const displayS = String(s).padStart(2, '0');
+                
+                element.textContent = `${displayH}:${displayM}:${displayS}`;
+            }
+        });
+    }
+    
+    // 1秒ごとにタイマーを更新
+    setInterval(startCountdown, 1000);
+    // 初回実行
+    startCountdown();
+
+
+    // --- 1. レベル低下計算機のロジック ---
+    function calculateLevel() {
+        const originalLevelInput = document.getElementById('originalLevel').value;
+        const squadsInput = document.getElementById('squads').value; 
+        const resultDiv = document.getElementById('levelResult');
+
+        const originalLevel = parseFloat(originalLevelInput);
+        const squads = parseFloat(squadsInput);
+        
+        if (isNaN(originalLevel) || isNaN(squads) || originalLevel < 1 || squads < 0) {
+            resultDiv.innerHTML = '<div class="warning">エラー: 正しい数値を入力してください。</div>';
+            return;
+        }
+
+        const KILLS_PER_SQUAD = 5;
+        const totalKills = squads * KILLS_PER_SQUAD;
+        
+        const DECREASE_MULTIPLIER = 0.00274; 
+        const MIN_LEVEL = 1;
+
+        const levelDecrease = totalKills * originalLevel * DECREASE_MULTIPLIER;
+        let newLevel = originalLevel - levelDecrease;
+        if (newLevel < MIN_LEVEL) {
+            newLevel = MIN_LEVEL;
+        }
+
+        let resultText = 
+            `--- 計算結果 ---\n` +
+            `もとのレベル: ${originalLevel}\n` +
+            `**総KILL数**: ${totalKills} (部隊数 ${squads})\n` +
+            `レベル低下量: ${(levelDecrease).toFixed(2)}\n` +
+            `**デバフされたレベル: ${newLevel.toFixed(2)}**`;
+        
+        resultDiv.innerHTML = resultText;
+    }
+
+
+    // --- 2. 素材数/節約シミュレーターのロジック ---
+    function calculateMaterial() {
+        // parseInt() で整数に変換
+        const currentPotential = parseInt(document.getElementById('simCurrentPotential').value); 
+        const currentSimRank = document.getElementById('currentSimRank').value;
+        const targetPotential = parseFloat(document.getElementById('targetPotential').value); 
+        const resultDiv = document.getElementById('materialResult');
+
+        // NaN、範囲、および現在の潜在能力が目標以上でないかのチェック
+        if (isNaN(currentPotential) || isNaN(targetPotential) || currentPotential < 0 || currentPotential >= targetPotential) {
+            resultDiv.innerHTML = '<div class="warning">エラー: 正しい数値を入力してください。現在の潜在能力は目標潜在能力より低くしてください。</div>';
+            return;
+        }
+        
+        const TARGET_POTENTIAL = targetPotential; 
+        const MATERIAL_COST_PER_STEP = 10; 
+
+        const rankKeys = ['85', '114', '142', '171', '199', '200'];
+        const currentRankIndex = rankKeys.indexOf(currentSimRank);
+        const targetSimRank = rankKeys[currentRankIndex + 1]; 
+
+        function calculateCost(startPotential, rankValue) {
+            let current = startPotential;
+            let totalMaterials = 0;
+            const rankData = POTENTIAL_TABLE[rankValue];
+
+            while (current < TARGET_POTENTIAL) {
+                let increase = 0;
+                
+                // ランクテーブルから上昇値を取得
+                for (const [threshold, inc] of rankData) {
+                    if (current < threshold) {
+                        increase = inc;
+                        break;
+                    }
+                }
+
+                if (increase === 0) {
+                    // ランク85以下で42%を超える場合など
+                    return Infinity;
+                }
+
+                // 目標値を超えないように上昇量を調整
+                const nextIncrease = Math.min(increase, TARGET_POTENTIAL - current);
+                
+                // 非常に微小な増加しかない場合はループを抜ける (無限ループ防止)
+                if (nextIncrease < 0.0001) break; 
+
+                current += nextIncrease;
+                totalMaterials += MATERIAL_COST_PER_STEP;
+            }
+            // 10個単位で表示
+            return Math.round(totalMaterials / 10) * 10; 
+        }
+
+        const currentCost = calculateCost(currentPotential, currentSimRank);
+        
+        let resultText = `--- 目標 ${TARGET_POTENTIAL.toFixed(1)}% までの素材数 ---\n`;
+        
+        if (currentCost === Infinity) {
+            resultDiv.innerHTML = '<div class="warning">現在の設定 (' + currentPotential + '%、ランク85以下) ではデータ不足のため計算できません。</div>';
+            return;
+        } else {
+            resultText += 
+                `現在のランク (${currentSimRank}～) での必要素材数: **約 ${currentCost.toLocaleString()} 個**\n`;
+        }
+
+        
+        if (targetSimRank) {
+            const targetCost = calculateCost(currentPotential, targetSimRank);
+            
+            if (targetCost !== Infinity) {
+                const saving = currentCost - targetCost;
+                
+                resultText += 
+                    `\n--- プレイヤーレベルアップによる節約 ---\n` +
+                    `プレイヤーレベル (${targetSimRank}～) での必要素材数: 約 ${targetCost.toLocaleString()} 個\n` +
+                    `**節約できる素材数: 約 ${saving.toLocaleString()} 個**`;
+
+                if (saving > 0) {
+                    resultText += `\n(この差がレベルアップしてから潜在能力強化のメリットです) `;
+                }
+            } else {
+                resultDiv.innerHTML += `\n\n※一つ上のレベル、データ不足のため節約量は計算できません。`;
+            }
+        }
+
+        resultDiv.innerHTML = resultText;
+    }
+
+    // --- ページロード時処理 ---
+    function initialize() {
+        // 1. レベル選択肢を動的に生成
+        const selectElementLevel = document.getElementById('originalLevel');
+        for (let lv = 100; lv <= 300; lv += 20) {
+            const option = document.createElement('option');
+            option.value = lv;
+            option.textContent = lv;
+            if (lv === 120) {
+                option.selected = true;
+            }
+            selectElementLevel.appendChild(option);
+        }
+
+        // 2. すべての計算を実行して初期値を表示
+        calculateLevel(); 
+        calculateMaterial(); 
+    }
+
+    window.onload = initialize;
+</script>
+</body>
+</html>
