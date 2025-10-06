@@ -143,21 +143,21 @@
         <span id="timer-0" class="timer-time">--:--:--</span>
     </div>
     <div class="timer-box">
-        <span class="timer-label">正午ボス戦 (12:45)</span>
+        <span class="timer-label">お昼ボス戦 (12:45)</span>
         <span id="timer-1" class="timer-time">--:--:--</span>
     </div>
     <div class="timer-box">
-        <span class="timer-label">夕方ボス戦 (19:45)</span>
+        <span class="timer-label">夜間ボス戦 (19:45)</span>
         <span id="timer-2" class="timer-time">--:--:--</span>
     </div>
     <div class="timer-box">
-        <span class="timer-label">王都争奪戦 (21:30)</span>
+        <span class="timer-label">王都争奪戦 (21:00)</span>
         <span id="timer-3" class="timer-time">--:--:--</span>
     </div>
 </div>
 
 <div class="container">
-    <h1>レベル低下計算機(+_+)</h1>
+    <h1>(+_+)レベル低下計算機</h1>
     <div class="input-group">
         <label for="originalLevel">敵か自分のキャラクターレベル (LV):</label>
         <select id="originalLevel" onchange="calculateLevel()">
@@ -223,7 +223,7 @@
         { name: "宣戦布告", time: "08:00:00" },
         { name: "正午ボス戦", time: "12:45:00" },
         { name: "夕方ボス戦", time: "19:45:00" },
-        { name: "王都争奪戦", time: "21:30:00" } 
+        { name: "王都争奪戦", time: "21:00:00" } 
     ];
 
     function startCountdown() {
@@ -417,4 +417,5 @@
     window.onload = initialize;
 </script>
 </body>
+
 </html>
